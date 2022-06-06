@@ -1,0 +1,7 @@
+include LICENSE
+include README.md
+recursive-include drf_user_activity_tracker_mongodb/static *
+recursive-include drf_user_activity_tracker_mongodb/templates *
+recursive-include drf_user_activity_tracker_mongodb/management *
+recursive-include drf_user_activity_tracker_mongodb/geo_databases *
+recursive-include docs *

@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% load tagger %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/responsive.css" %}">
+{% endblock %}
+
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> &rsaquo;
+        <a href="{% url 'admin:app_list' 'drf_user_activity_tracker_mongodb' %}">{% trans 'Activity Log' %}</a> &rsaquo;
+        {% trans 'Activity Logs' %}
+    </div>
+{% endblock %}
+
+{% block pretitle %}
+    <h1>Activity Logs</h1>
+{% endblock %}
+
+{% block content %}
+    {% under_score_tag data "_id" as id %}
+    <H2>id:</H2>{{ id }}
+    <br>
+    <H2>url name:</H2>{{ data.url_name }}
+    <br>
+    <H2>url path:</H2>{{ data.url_path }}
+    <br>
+    <H2>user id:</H2>{{ data.user_id }}
+    <br>
+    <H2>api:</H2>{{ data.api }}
+    <br>
+    <H2>headers:</H2><span style="word-break: break-all;">{{ data.headers }}</span>
+    <br>
+    <H2>body:</H2>{{ data.body }}
+    <br>
+    <H2>method:</H2>{{ data.method }}
+    <br>
+    <H2>client ip address:</H2>{{ data.client_ip_address }}
+    <br>
+    <H2>country:</H2>{{ data.country }}
+    <br>
+    <H2>response:</H2>{{ data.response }}
+    <br>
+    <H2>status code:</H2>{{ data.status_code }}
+    <br>
+    <H2>execution_time:</H2>{{ data.execution_time }}
+    <br>
+    <H2>created time:</H2>{{ data.created_time }}
+{% endblock %}

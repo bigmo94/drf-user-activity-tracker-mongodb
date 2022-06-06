@@ -1,0 +1,188 @@
+{% extends "admin/base_site.html" %}
+{% load tagger %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/responsive.css' %}">
+
+    <script type="application/javascript">
+        function send_filter(obj, key_name, url_params) {
+            var base_url = "{% url 'admin:drf_user_activity_tracker_mongodb_activity_log_changelist' %}";
+            var url = base_url + '?' + url_params + '&' + key_name + '=' + obj.value;
+            window.location.href = url;
+        }
+    </script>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> &rsaquo;
+        <a href="{% url 'admin:app_list' 'drf_user_activity_tracker_mongodb' %}">{% trans 'Activity Log' %}</a> &rsaquo;
+        {% trans 'Activity Logs' %}
+    </div>
+{% endblock %}
+
+{% block pretitle %}
+    <h1>Activity Logs</h1>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <div class="module filtered" id="changelist">
+            {#            <div class="changelist-form-container">#}
+            <div id="toolbar">
+                <form id="changelist-search" method="get">
+                    <div><!-- DIV needed for valid HTML -->
+                        <label for="searchbar"><img src="/static/admin/img/search.svg" alt="Search"></label>
+                        <input type="text" size="40" name="q" id="searchbar" autofocus="">
+                        {% if request.GET.url_name %}
+                            <input type="hidden" name="url_name" value="{{ request.GET.url_name }}">
+                        {% endif %}
+                        {% if request.GET.status %}
+                            <input type="hidden" name="url_name" value="{{ request.GET.status }}">
+                        {% endif %}
+                        {% if request.GET.created_time %}
+                            <input type="hidden" name="url_name" value="{{ request.GET.created_time }}">
+                        {% endif %}
+
+                        <input type="submit" value="Search">
+                    </div>
+                </form>
+            </div>
+            <form id="changelist-form" method="post" novalidate="" style="width: auto;margin-right: 280px;">
+                <div class="results">
+                    <table id="result_list">
+                        <thead>
+                        <tr>
+                            <th scope="col" class="sortable column_id">
+                                <div class="text">
+                                    <a>ID</a>
+                                </div>
+                                <div class="clear"></div>
+                            </th>
+                            <th scope="col" class="sortable column_url_name">
+                                <div class="text">
+                                    <a>URL Name</a>
+                                </div>
+                                <div class="clear"></div>
+                            </th>
+                            <th scope="col" class="sortable column_user_id">
+                                <div class="text"><a>User ID</a></div>
+                                <div class="clear"></div>
+                            </th>
+                            <th scope="col" class="sortable column_user_id">
+                                <div class="text"><a>Status Code</a></div>
+                                <div class="clear"></div>
+                            </th>
+                            <th scope="col" class="sortable column_created_time">
+                                <div class="text"><a>Created Time</a></div>
+                                <div class="clear"></div>
+                            </th>
+                            <th scope="col" class="sortable column_created_time">
+                                <div class="text"><a>Execution Time</a></div>
+                                <div class="clear"></div>
+                            </th>
+
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for row in dataset %}
+                            {% under_score_tag row "_id" as id %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin:drf_user_activity_tracker_mongodb_activity_log_change' pk=id %}">{{ id }}</a>
+                                </td>
+                                <td>{{ row.url_name }}</td>
+                                <td>{{ row.user_id }}</td>
+                                <td>{{ row.status_code }}</td>
+                                <td>{{ row.created_time }}</td>
+                                <td>{{ row.execution_time }}</td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+                {% if page_object.has_other_pages %}
+                    <p class="paginator">
+                        {% get_proper_elided_page_range page_object.paginator count page_object.number as page_range %}
+                        {% for i in page_range %}
+                            {% if page_object.number == i %}
+                                <span class="this-page">{{ i }}</span>
+                            {% else %}
+                                {% if i == page_object.paginator.ELLIPSIS %}
+                                    <span class="page-link">{{ page_object.paginator.ELLIPSIS }}</span>
+                                {% else %}
+                                    <a href="?page={{ i }}">{{ i }}</a>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ count }} Logs
+                    </p>
+                {% endif %}
+            </form>
+
+            <div id="changelist-filter">
+                <h2>Filter</h2>
+                <h3> By status code </h3>
+                <ul>
+
+                    <li {% if not request.GET.status %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'status' %}">All</a></li>
+                    <li {% if request.GET.status == "200" %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'status' %}&status=200">200</a>
+                    </li>
+                    <li {% if request.GET.status == '300' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'status' %}&status=300">300</a>
+                    </li>
+                    <li {% if request.GET.status == '400' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'status' %}&status=400">400</a>
+                    </li>
+                    <li {% if request.GET.status == '500' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'status' %}&status=500">500</a>
+                    </li>
+
+                </ul>
+                <h3> By url name </h3>
+                <ul>
+                    <label for="urls"></label>
+                    <select name="url_names" id="urls"
+                            onchange="send_filter(this, 'url_name', '{% clean_url_encode request.GET 'url_name' %}')" style="width: 210px">
+                        <option {% if not request.GET.url_name %}selected{% endif %} value="">All</option>
+                        {% for url in url_names %}
+                            <option {% if request.GET.url_name == url %}selected{% endif %}
+                                    value="{{ url }}">{{ url }}</option>
+                        {% endfor %}
+                    </select>
+                </ul>
+                <h3> By created time </h3>
+                <ul>
+
+                    <li {% if not request.GET.created_time %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'created_time' %}" title="Any date">Any date</a></li>
+
+                    <li {% if request.GET.created_time == 'today' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'created_time' %}&created_time=today" title="Today">Today</a>
+                    </li>
+
+                    <li {% if request.GET.created_time == 'past_7_days' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'created_time' %}&created_time=past_7_days"
+                           title="Past 7 days">Past 7 days</a></li>
+
+                    <li {% if request.GET.created_time == 'this_month' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'created_time' %}&created_time=this_month"
+                           title="This month">This month</a></li>
+
+                    <li {% if request.GET.created_time == 'this_year' %} class="selected" {% endif %}>
+                        <a href="?{% clean_url_encode request.GET 'created_time' %}&created_time=this_year"
+                           title="This year">This year</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
