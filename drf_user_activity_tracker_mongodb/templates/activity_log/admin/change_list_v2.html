@@ -48,6 +48,9 @@
                         {% if request.GET.created_time %}
                             <input type="hidden" name="url_name" value="{{ request.GET.created_time }}">
                         {% endif %}
+                        {% if request.GET.page %}
+                            <input type="hidden" name="url_name" value="{{ request.GET.page }}">
+                        {% endif %}
 
                         <input type="submit" value="Search">
                     </div>
@@ -118,7 +121,7 @@
                                 {% if i == page_object.paginator.ELLIPSIS %}
                                     <span class="page-link">{{ page_object.paginator.ELLIPSIS }}</span>
                                 {% else %}
-                                    <a href="?page={{ i }}">{{ i }}</a>
+                                    <a href="?{% clean_url_encode request.GET 'page' %}&page={{ i }}">{{ i }}</a>
                                 {% endif %}
                             {% endif %}
                         {% endfor %}

@@ -2,6 +2,7 @@ import ipaddress
 import json
 import pathlib
 import time
+import jwt
 
 import pygeoip
 import rest_framework_simplejwt.exceptions
@@ -91,18 +92,25 @@ class ActivityTrackerMiddleware:
             # the view is called.
 
             header_token = request.META.get("HTTP_AUTHORIZATION")
+            algorithm = 'HS256'
+            if hasattr(settings, "JWT_ALGORITHM") and isinstance(settings.JWT_ALGORITHM, str):
+                algorithm = settings.JWT_ALGORITHM
+
             if header_token:
                 try:
-                    user = authentication.JWTAuthentication().authenticate(request)[0]
-                except rest_framework_simplejwt.exceptions.InvalidToken:
-                    user = request.user
+                    token = header_token.split()[1]
+                    user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                    user = User.objects.get(id=user_token.get('user_id'))
+                except:
+                    return response
             elif hasattr(response, 'data') and isinstance(response.data, dict) and response.data.get('access'):
-                user_token = AccessToken(response.data.get('access'))
-                user = User.objects.get(id=user_token.get('user_id'))
+                user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
+                                        algorithms=[algorithm])
+                try:
+                    user = User.objects.get(id=user_token.get('user_id'))
+                except User.DoesNotExist:
+                    return response
             else:
-                return response
-
-            if user.is_anonymous:
                 return response
 
             headers = get_headers(request=request)
@@ -169,3 +177,4 @@ class ActivityTrackerMiddleware:
         else:
             response = self.get_response(request)
         return response
+

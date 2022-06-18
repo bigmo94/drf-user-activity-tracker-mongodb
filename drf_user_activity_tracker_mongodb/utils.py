@@ -1,16 +1,14 @@
 import collections.abc
 import importlib
 import re
-import warnings
 from math import ceil
 
 from bson import ObjectId
 from django.apps import apps
 from django.conf import settings
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
 from pymongo import MongoClient
 
 SENSITIVE_KEYS = ['password', 'token', 'access', 'refresh']
@@ -148,6 +146,11 @@ def get_all_url_names():
             if url.name:
                 list_of_url_name.append(url.name)
 
+    if hasattr(settings, 'DRF_ACTIVITY_TRACKER_URL_NAMES'):
+        if isinstance(settings.DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS, (list, tuple)):
+            list_of_url_name.extend(settings.DRF_ACTIVITY_TRACKER_URL_NAMES)
+            
+    list_of_url_name.sort()
     return list_of_url_name
 
 
@@ -185,6 +188,7 @@ class ParamsHandler:
 
 
 class CustomPaginator(Paginator):
+    ELLIPSIS = '…'
 
     def __init__(self, dataset, data_count, per_page, orphans=0,
                  allow_empty_first_page=True):
@@ -210,6 +214,37 @@ class CustomPaginator(Paginator):
             return 0
         hits = max(1, self.data_count - self.orphans)
         return ceil(hits / self.per_page)
+
+    def get_elided_page_range(self, number=1, *, on_each_side=3, on_ends=2):
+        """
+        Return a 1-based range of pages with some values elided.
+
+        If the page range is larger than a given size, the whole range is not
+        provided and a compact form is returned instead, e.g. for a paginator
+        with 50 pages, if page 43 were the current page, the output, with the
+        default arguments, would be:
+
+            1, 2, …, 40, 41, 42, 43, 44, 45, 46, …, 49, 50.
+        """
+        number = self.validate_number(number)
+
+        if self.num_pages <= (on_each_side + on_ends) * 2:
+            yield from self.page_range
+            return
+
+        if number > (1 + on_each_side + on_ends) + 1:
+            yield from range(1, on_ends + 1)
+            yield self.ELLIPSIS
+            yield from range(number - on_each_side, number + 1)
+        else:
+            yield from range(1, number + 1)
+
+        if number < (self.num_pages - on_each_side - on_ends) - 1:
+            yield from range(number + 1, number + on_each_side + 1)
+            yield self.ELLIPSIS
+            yield from range(self.num_pages - on_ends + 1, self.num_pages + 1)
+        else:
+            yield from range(number + 1, self.num_pages + 1)
 
 
 class Page(collections.abc.Sequence):

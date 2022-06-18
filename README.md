@@ -1,7 +1,7 @@
 # DRF User Activity Tracker Mongodb
 ## _Log All User Activities_
 
-![version](https://img.shields.io/badge/version-1.1.9-blue.svg)
+![version](https://img.shields.io/badge/version-1.2.4-blue.svg)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 <a href="https://github.com/bigmo94/drf-user-activity-tracker-mongodb"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/></a>
 
@@ -72,7 +72,7 @@ MIDDLEWARE = [
 ```
 
 #### * Add these lines in Django settings file.
-
+Note: `The user_id must be in the access token's payload. and 'access' key must be in login response data.`
 ## Store logs into the database
 Log every request into the database.
 ```python
@@ -250,6 +250,8 @@ you can run this command to get dictionary of all urls name:
 ```
 python manage.py get_url_names
 ```
+Note: In django admin panel you can filter logs by url name. some url name do not appear in filter list. you can set `DRF_ACTIVITY_TRACKER_URL_NAMES` in settings with the list of url names that you want to be filtered by.
+
 and then copy the dictionary to settings.py:
 ```python
 DRF_ACTIVITY_TRACKER_EVENT_NAME = {

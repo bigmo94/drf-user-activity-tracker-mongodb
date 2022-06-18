@@ -20,10 +20,10 @@ def clean_url_encode(data, remove):
         attrs.pop(remove)
     return urlencode(attrs)
 
+
 @register.simple_tag
-def get_proper_elided_page_range(p, count ,number, on_each_side=3, on_ends=2):
+def get_proper_elided_page_range(p, count, number, on_each_side=3, on_ends=2):
     paginator = CustomPaginator(p.dataset, count, p.per_page)
     return paginator.get_elided_page_range(number=number,
                                            on_each_side=on_each_side,
                                            on_ends=on_ends)
-
