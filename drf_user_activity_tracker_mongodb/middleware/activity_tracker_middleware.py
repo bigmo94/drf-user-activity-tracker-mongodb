@@ -2,19 +2,17 @@ import ipaddress
 import json
 import pathlib
 import time
-import jwt
 
+import jwt
 import pygeoip
-import rest_framework_simplejwt.exceptions
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import resolve
 from django.utils import timezone
+
 from drf_user_activity_tracker_mongodb import ACTIVITY_TRACKER_SIGNAL
 from drf_user_activity_tracker_mongodb.start_logger_when_server_starts import LOGGER_THREAD
 from drf_user_activity_tracker_mongodb.utils import get_headers, get_client_ip, mask_sensitive_data
-from rest_framework_simplejwt import authentication
-from rest_framework_simplejwt.tokens import AccessToken
 
 User = get_user_model()
 
@@ -177,4 +175,3 @@ class ActivityTrackerMiddleware:
         else:
             response = self.get_response(request)
         return response
-

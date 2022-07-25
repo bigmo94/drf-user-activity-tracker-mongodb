@@ -1,5 +1,37 @@
+from datetime import datetime
+
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+
+class DateValidatorSerializer(serializers.Serializer):
+    created_time_after = serializers.DateField(required=False)
+    created_time_before = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        if attrs.get("created_time_after") and attrs.get("created_time_before"):
+            if attrs.get("created_time_after") > attrs.get("created_time_before"):
+                raise ValidationError(_("from time occurred after to time!"))
+
+        # Mongodb does not support date field, these scripts convert date fields to datetime fields
+        if attrs.get("created_time_after"):
+            created_time_after_date = attrs.get("created_time_after")
+            created_time_after_date_time = datetime(year=created_time_after_date.year,
+                                                    month=created_time_after_date.month,
+                                                    day=created_time_after_date.day)
+            attrs['created_time_after'] = created_time_after_date_time
+
+        if attrs.get("created_time_before"):
+            created_time_before_date = attrs.get("created_time_before")
+            created_time_before_date_time = datetime(year=created_time_before_date.year,
+                                                     month=created_time_before_date.month,
+                                                     day=created_time_before_date.day,
+                                                     hour=23, minute=59, second=59)
+            attrs['created_time_before'] = created_time_before_date_time
+
+        return attrs
 
 
 class ActivityLogSerializer(serializers.Serializer):

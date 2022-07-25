@@ -104,23 +104,35 @@ class MyCollection(MongoConnection):
     def save(self, obj_list):
         self.collection.insert_many(obj_list)
 
-    def list(self, user_id=None, url_name=None, status_code=None, time_delta=None, api=False, dataset_limit=0, skip=0):
+    def list(self, user_id=None, url_name=None, status_code=None, time_delta=None, dataset_limit=0, skip=0):
         filter_params = {}
         if user_id:
             filter_params.update({'user_id': user_id})
-        if api:
-            limit = 100
-            if hasattr(settings, 'DRF_ACTIVITI_API_LIMIT'):
-                if isinstance(settings.DRF_ACTIVITI_API_LIMIT, (tuple, list)):
-                    limit = settings.DRF_ACTIVITI_API_LIMIT
-            return list(self.collection.find(filter_params).sort('created_time', -1).limit(limit))
+        if time_delta:
+            filter_params.update({'created_time': time_delta})
         if url_name:
             filter_params.update({'url_name': url_name})
         if status_code:
             filter_params.update({'status_code': {'$gte': status_code, '$lt': status_code + 100}})
+        return list(self.collection.find(filter_params).sort('created_time', -1).limit(dataset_limit).skip(skip))
+
+    def api_list(self, user_id=None, time_delta=None):
+        filter_params = {}
+        limit = 1500
+        if hasattr(settings, 'DRF_ACTIVITI_API_LIMIT'):
+            if isinstance(settings.DRF_ACTIVITI_API_LIMIT, (tuple, list)):
+                limit = settings.DRF_ACTIVITI_API_LIMIT
+        if user_id:
+            filter_params.update({'user_id': user_id})
+
         if time_delta:
             filter_params.update({'created_time': time_delta})
-        return list(self.collection.find(filter_params).sort('created_time', -1).limit(dataset_limit).skip(skip))
+
+        if hasattr(settings, 'DRF_ACTIVITI_API_UNNECESSARY_URL_NAME'):
+            if isinstance(settings.DRF_ACTIVITI_API_UNNECESSARY_URL_NAME, list):
+                filter_params.update({'url_name': {'$nin': settings.DRF_ACTIVITI_API_UNNECESSARY_URL_NAME}})
+
+        return list(self.collection.find(filter_params).sort('created_time', -1).limit(limit))
 
     def detail(self, pk):
         try:
@@ -149,7 +161,7 @@ def get_all_url_names():
     if hasattr(settings, 'DRF_ACTIVITY_TRACKER_URL_NAMES'):
         if isinstance(settings.DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS, (list, tuple)):
             list_of_url_name.extend(settings.DRF_ACTIVITY_TRACKER_URL_NAMES)
-            
+
     list_of_url_name.sort()
     return list_of_url_name
 
@@ -302,3 +314,21 @@ class Page(collections.abc.Sequence):
         if self.number == self.paginator.num_pages:
             return self.paginator.count
         return self.number * self.paginator.per_page
+
+
+def create_time_delta_for_api(from_date, to_date):
+    time_delta = None
+
+    created_time_after = from_date
+    created_time_before = to_date
+
+    if created_time_after and created_time_before:
+        time_delta = {'$gte': created_time_after, '$lte': created_time_before}
+
+    if created_time_after and not created_time_before:
+        time_delta = {'$gte': created_time_after}
+
+    if created_time_before and not created_time_after:
+        time_delta = {'$lte': created_time_before}
+
+    return time_delta
