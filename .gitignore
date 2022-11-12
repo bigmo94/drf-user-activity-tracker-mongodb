@@ -59,9 +59,6 @@ media/*
 static/*
 db.sqlite3
 .idea
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
 *.session
 *.session-journal
 *.pid
