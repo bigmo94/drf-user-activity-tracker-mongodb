@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import resolve
 from django.utils import timezone
+from rest_framework.parsers import MultiPartParser
 
 from drf_user_activity_tracker_mongodb import ACTIVITY_TRACKER_SIGNAL
 from drf_user_activity_tracker_mongodb.start_logger_when_server_starts import LOGGER_THREAD
@@ -45,6 +46,11 @@ class ActivityTrackerMiddleware:
             if isinstance(settings.DRF_ACTIVITY_TRACKER_SKIP_URL_NAME, (tuple, list)):
                 self.DRF_ACTIVITY_TRACKER_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_SKIP_URL_NAME)
 
+        self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME = []
+        if hasattr(settings, 'DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME'):
+            if isinstance(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME, (tuple, list)):
+                self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME) 
+
         self.DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE = []
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE'):
             if isinstance(settings.DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE, (tuple, list)):
@@ -78,7 +84,14 @@ class ActivityTrackerMiddleware:
             start_time = time.time()
             request_data = ''
             try:
-                request_data = json.loads(request.body) if request.body else ''
+                if request.content_type in ('application/json', 'application/vnd.api+json',):
+                    request_data = json.loads(request.body) if request.body else ''
+                elif request.content_type == 'multipart/form-data':
+                    parser_obj = MultiPartParser()
+                    context = {'request': request}
+                    request_data = parser_obj.parse(stream=request._stream, media_type=request.META['CONTENT_TYPE'],
+                                                    parser_context=context) if request.body else ''
+                    request_data = dict(request_data.data)
             except:
                 pass
 
@@ -108,6 +121,8 @@ class ActivityTrackerMiddleware:
                     user = User.objects.get(id=user_token.get('user_id'))
                 except User.DoesNotExist:
                     return response
+            elif url_name in self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME:
+                user = None
             else:
                 return response
 
@@ -152,7 +167,7 @@ class ActivityTrackerMiddleware:
                 data = dict(
                     url_name=url_name,
                     url_path=request.path,
-                    user_id=user.id,
+                    user_id=user.id if user else None,
                     api=api,
                     headers=mask_sensitive_data(headers),
                     body=mask_sensitive_data(request_data),

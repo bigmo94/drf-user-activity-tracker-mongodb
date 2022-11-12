@@ -11,7 +11,7 @@
 
     <script type="application/javascript">
         function send_filter(obj, key_name, url_params) {
-            var base_url = "{% url 'admin:drf_user_activity_tracker_mongodb_activity_log_changelist' %}";
+            var base_url = "{% url 'admin:drf_user_activity_tracker_mongodb_activitylog_changelist' %}";
             var url = base_url + '?' + url_params + '&' + key_name + '=' + obj.value;
             window.location.href = url;
         }
@@ -98,7 +98,7 @@
                             {% under_score_tag row "_id" as id %}
                             <tr>
                                 <td>
-                                    <a href="{% url 'admin:drf_user_activity_tracker_mongodb_activity_log_change' pk=id %}">{{ id }}</a>
+                                    <a href="{% url 'admin:drf_user_activity_tracker_mongodb_activitylog_change' pk=id %}">{{ id }}</a>
                                 </td>
                                 <td>{{ row.url_name }}</td>
                                 <td>{{ row.user_id }}</td>

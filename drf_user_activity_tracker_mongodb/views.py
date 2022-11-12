@@ -6,7 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from drf_user_activity_tracker_mongodb.permissions import CanViewAdminHistory
 from drf_user_activity_tracker_mongodb.serializers import ActivityLogSerializer, ActivityLogAdminSerializer, \
-    DateValidatorSerializer
+    QueryParamsValidatorSerializer
 from drf_user_activity_tracker_mongodb.utils import MyCollection, create_time_delta_for_api
 
 
@@ -17,7 +17,7 @@ class ActivityLogView(mixins.ListModelMixin, GenericAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        date_validator_serializer = DateValidatorSerializer(data=self.request.query_params)
+        date_validator_serializer = QueryParamsValidatorSerializer(data=self.request.query_params)
         date_validator_serializer.is_valid(raise_exception=True)
 
         created_time_after = date_validator_serializer.validated_data.get("created_time_after")
@@ -39,17 +39,17 @@ class ActivityLogAdminView(mixins.ListModelMixin, GenericAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        date_validator_serializer = DateValidatorSerializer(data=self.request.query_params)
-        date_validator_serializer.is_valid(raise_exception=True)
+        query_params_validator_serializer = QueryParamsValidatorSerializer(data=self.request.query_params)
+        query_params_validator_serializer.is_valid(raise_exception=True)
 
-        created_time_after = date_validator_serializer.validated_data.get("created_time_after")
-        created_time_before = date_validator_serializer.validated_data.get("created_time_before")
+        created_time_after = query_params_validator_serializer.validated_data.get("created_time_after")
+        created_time_before = query_params_validator_serializer.validated_data.get("created_time_before")
         time_delta = create_time_delta_for_api(created_time_after, created_time_before)
 
-        if time_delta:
-            return MyCollection().api_list(time_delta=time_delta)
+        url_name = query_params_validator_serializer.validated_data.get('url_name')
+        user_id = query_params_validator_serializer.validated_data.get('user_id')
 
-        return MyCollection().api_list()
+        return MyCollection().api_list(time_delta=time_delta, url_name=url_name, user_id=user_id)
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

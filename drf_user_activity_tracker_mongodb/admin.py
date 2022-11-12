@@ -21,13 +21,12 @@ if database_log_enabled():
         model = ActivityLog
 
         def get_urls(self):
-            info = self.model._meta.app_label, self.model._meta.model_name
+            info = "{}_{}_changelist".format(self.model._meta.app_label, self.model._meta.model_name)
+            detail = "{}_{}_change".format(self.model._meta.app_label, self.model._meta.model_name)
 
             return [
-                path(r'', self.admin_site.admin_view(self.activity_log_view), name='%s_%s_changelist' % info),
-                path(r'<str:pk>/change/',
-                     self.admin_site.admin_view(self.activity_log_detail_view),
-                     name='%s_%s_change' % info)
+                path(r'', self.activity_log_view, name=info),
+                path(r'<str:pk>/change/', self.activity_log_detail_view, name=detail)
             ]
 
         def activity_log_view(self, request):

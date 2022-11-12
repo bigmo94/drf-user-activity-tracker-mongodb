@@ -1,7 +1,7 @@
 # DRF User Activity Tracker Mongodb
 ## _Log All User Activities_
 
-![version](https://img.shields.io/badge/version-1.2.6-blue.svg)
+![version](https://img.shields.io/badge/version-1.3.4-blue.svg)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 <a href="https://github.com/bigmo94/drf-user-activity-tracker-mongodb"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/></a>
 
@@ -9,7 +9,7 @@ An API Logger of User Activity for your Django Rest Framework project.
 
 It logs all the API information for content type "application/json" in mongo database.
 
-Note: It logs just API information for registered user. (Anonymous User Activities are ignored.) 
+Note: It logs just API information for registered user. (Anonymous User Activities are ignored. But It's possible to log api without user id by add their url names in DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME attribute in settings.py) 
 
 1. User_ID
 2. URL_PATH
@@ -84,7 +84,7 @@ DRF_ACTIVITY_TRACKER_DATABASE = True  # Default to False
 * The search bar will search in Request Body, Response, Headers and API URL.
 
 
-Note: You don't need to migrate.
+Note: You don't need to migrate if you don't want use history api'.
 
 ## Set Mongodb settings
 Specify the mongodb config:
@@ -164,6 +164,12 @@ You can also skip any API to be logged by using url_name of the API.
 DRF_ACTIVITY_TRACKER_SKIP_URL_NAME = ['url_name1', 'url_name2']
 ```
 
+### DON'T Skip URL Name
+You can also set `DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME` in settings.py to logs api that does not have a user id.
+```python
+DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME = ['url_name1', 'url_name2']
+```
+
 Note: It does not log Django Admin Panel API calls and history logs list API calls.
 
 ### Hide Sensitive Data From Logs
@@ -237,7 +243,10 @@ urlpatterns = [
 {{ your_base_url }}/activity-logs/user-history/
 {{ your_base_url }}/activity-logs/admin-history/
 
-`for calling admin history api; you must have 'can view avtivity log' permission.`
+`for calling admin history api; you must have 'can view avtivity log' permission. or add DRF_ACTIVITY_TRACKER_PERMISSION in settings.py and add your permission in a string format.`
+```
+DRF_ACTIVITY_TRACKER_PERMISSION = 'customers.can_view_logs'
+```
 ##### The response includes these:
 
 1. id

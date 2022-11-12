@@ -1,11 +1,13 @@
+import logging
 import time
 from queue import Queue
 from threading import Thread
 
 from django.conf import settings
-from django.db.utils import OperationalError
 
 from drf_user_activity_tracker_mongodb.utils import MyCollection
+
+logger = logging.getLogger('error')
 
 
 class InsertLogIntoDatabase(Thread):
@@ -59,10 +61,7 @@ class InsertLogIntoDatabase(Thread):
     def _insert_into_data_base(self, bulk_item):
         try:
             MyCollection().save(bulk_item)
-        except OperationalError:
-            raise Exception("""
-            DRF ACTIVITY TRACKER EXCEPTION
-            Database or collection does not exist.
-            """)
         except Exception as e:
-            print('DRF ACTIVITY TRACKER EXCEPTION:', e)
+            message = "DRF ACTIVITY TRACKER EXCEPTION: {}, {}".format(str(e), type(e))
+            logger.error(message)
+            raise Exception(message)

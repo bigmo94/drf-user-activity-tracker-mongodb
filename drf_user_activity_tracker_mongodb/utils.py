@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from pymongo import MongoClient
 
-SENSITIVE_KEYS = ['password', 'token', 'access', 'refresh']
+SENSITIVE_KEYS = ['password', 'access', 'refresh']
 if hasattr(settings, 'DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS'):
     if isinstance(settings.DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS, (list, tuple)):
         SENSITIVE_KEYS.extend(settings.DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS)
@@ -69,6 +69,7 @@ def mask_sensitive_data(data):
     for key, value in data.items():
         if key in SENSITIVE_KEYS:
             data[key] = "***FILTERED***"
+            value = data[key]
 
         if isinstance(value, dict):
             data[key] = mask_sensitive_data(data[key])
@@ -81,7 +82,7 @@ def mask_sensitive_data(data):
 
 class MongoConnection(object):
     def __init__(self):
-        client = MongoClient(settings.DRF_ACTIVITY_TRACKER_MONGO_CONNECTION)
+        client = MongoClient(settings.DRF_ACTIVITY_TRACKER_MONGO_CONNECTION, serverSelectionTimeoutMs=5000)
 
         self.db = client[settings.DRF_ACTIVITY_TRACKER_MONGO_DB_NAME]
         self.collection = self.db[settings.DRF_ACTIVITY_TRACKER_MONGO_DB_COLLECTION_NAME]
@@ -116,7 +117,7 @@ class MyCollection(MongoConnection):
             filter_params.update({'status_code': {'$gte': status_code, '$lt': status_code + 100}})
         return list(self.collection.find(filter_params).sort('created_time', -1).limit(dataset_limit).skip(skip))
 
-    def api_list(self, user_id=None, time_delta=None):
+    def api_list(self, user_id=None, time_delta=None, url_name=None):
         filter_params = {}
         limit = 1500
         if hasattr(settings, 'DRF_ACTIVITI_API_LIMIT'):
@@ -127,6 +128,9 @@ class MyCollection(MongoConnection):
 
         if time_delta:
             filter_params.update({'created_time': time_delta})
+
+        if url_name:
+            filter_params.update({'url_name': url_name})
 
         if hasattr(settings, 'DRF_ACTIVITI_API_UNNECESSARY_URL_NAME'):
             if isinstance(settings.DRF_ACTIVITI_API_UNNECESSARY_URL_NAME, list):

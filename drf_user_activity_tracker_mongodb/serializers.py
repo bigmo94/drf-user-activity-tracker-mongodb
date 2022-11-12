@@ -6,9 +6,11 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
-class DateValidatorSerializer(serializers.Serializer):
+class QueryParamsValidatorSerializer(serializers.Serializer):
     created_time_after = serializers.DateField(required=False)
     created_time_before = serializers.DateField(required=False)
+    url_name = serializers.CharField(required=False)
+    user_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
         if attrs.get("created_time_after") and attrs.get("created_time_before"):
