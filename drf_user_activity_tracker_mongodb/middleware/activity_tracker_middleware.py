@@ -49,7 +49,7 @@ class ActivityTrackerMiddleware:
         self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME = []
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME'):
             if isinstance(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME, (tuple, list)):
-                self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME) 
+                self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME)
 
         self.DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE = []
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE'):
@@ -114,14 +114,20 @@ class ActivityTrackerMiddleware:
 
             payload_data = {}
             if header_token:
-                token = header_token.split()[1]
-                user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                try:
+                    token = header_token.split()[1]
+                    user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                except:
+                    return response
                 for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
                     payload_data[key] = user_token.get(key)
 
             elif hasattr(response, 'data') and isinstance(response.data, dict) and response.data.get('access'):
-                user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
-                                        algorithms=[algorithm])
+                try:
+                    user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
+                                            algorithms=[algorithm])
+                except:
+                    return response
                 for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
                     payload_data[key] = user_token.get(key)
 
