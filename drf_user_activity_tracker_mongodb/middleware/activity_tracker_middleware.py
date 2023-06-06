@@ -61,6 +61,11 @@ class ActivityTrackerMiddleware:
             if isinstance(settings.DRF_ACTIVITY_TRACKER_METHODS, (tuple, list)):
                 self.DRF_ACTIVITY_TRACKER_METHODS = settings.DRF_ACTIVITY_TRACKER_METHODS
 
+        self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS = ['user_id']
+        if hasattr(settings, 'DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS'):
+            if isinstance(settings.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS, (tuple, list)):
+                self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS.extend(settings.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS)
+
     def __call__(self, request):
 
         # Run only if logger is enabled.
@@ -107,22 +112,22 @@ class ActivityTrackerMiddleware:
             if hasattr(settings, "JWT_ALGORITHM") and isinstance(settings.JWT_ALGORITHM, str):
                 algorithm = settings.JWT_ALGORITHM
 
+            payload_data = {}
             if header_token:
-                try:
-                    token = header_token.split()[1]
-                    user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
-                    user = User.objects.get(id=user_token.get('user_id'))
-                except:
-                    return response
+                token = header_token.split()[1]
+                user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
+                    payload_data[key] = user_token.get(key)
+
             elif hasattr(response, 'data') and isinstance(response.data, dict) and response.data.get('access'):
                 user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
                                         algorithms=[algorithm])
-                try:
-                    user = User.objects.get(id=user_token.get('user_id'))
-                except User.DoesNotExist:
-                    return response
+                for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
+                    payload_data[key] = user_token.get(key)
+
             elif url_name in self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME:
-                user = None
+                for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
+                    payload_data[key] = None
             else:
                 return response
 
@@ -167,7 +172,6 @@ class ActivityTrackerMiddleware:
                 data = dict(
                     url_name=url_name,
                     url_path=request.path,
-                    user_id=user.id if user else None,
                     api=api,
                     headers=mask_sensitive_data(headers),
                     body=mask_sensitive_data(request_data),
@@ -179,6 +183,7 @@ class ActivityTrackerMiddleware:
                     created_time=timezone.now(),
                     country=country_name,
                 )
+                data.update(payload_data)
                 if self.DRF_ACTIVITY_TRACKER_DATABASE:
                     if LOGGER_THREAD:
                         LOGGER_THREAD.put_log_data(data=data)

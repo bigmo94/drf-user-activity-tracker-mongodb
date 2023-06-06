@@ -1,7 +1,7 @@
 # DRF User Activity Tracker Mongodb
 ## _Log All User Activities_
 
-![version](https://img.shields.io/badge/version-1.3.4-blue.svg)
+![version](https://img.shields.io/badge/version-1.3.6-blue.svg)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 <a href="https://github.com/bigmo94/drf-user-activity-tracker-mongodb"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/></a>
 
@@ -185,6 +185,22 @@ DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS = ['password', 'token', 'access', 'refresh']
 You can log only selected methods by specifying `DRF_ACTIVITY_TRACKER_METHODS` in settings.py.
 ```python
 DRF_ACTIVITY_TRACKER_METHODS = ['GET', 'POST', 'DELETE', 'PUT']  # Default to empty list (Log all the requests).
+```
+
+### Want to log token's payload keys?
+If you add some keys to payload of token, and you want to log these keys into db, you can do this by setting `DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS` in settings.py.
+Note: the user_id is logged by default, and you don't need to add this key.
+```python
+# Example
+token_payload = {
+  "token_type": "access",
+  "exp": 1313131313,
+  "jti": "32b32caa7c4c04d3ab7050175e54680d1",
+  "user_id": 13,
+  "protect_key": "13CC13DSF424FSF",
+  "company_id": "13"
+}
+DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS = ['company_id', 'protect_key']
 ```
 
 ### Want to see the API information in local timezone? (Optional)
