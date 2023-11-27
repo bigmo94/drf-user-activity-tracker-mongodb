@@ -49,7 +49,7 @@ class ActivityTrackerMiddleware:
         self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME = []
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME'):
             if isinstance(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME, (tuple, list)):
-                self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME) 
+                self.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME.extend(settings.DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME)
 
         self.DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE = []
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_SKIP_NAMESPACE'):
@@ -89,7 +89,8 @@ class ActivityTrackerMiddleware:
             start_time = time.time()
             request_data = ''
             try:
-                if request.content_type in ('application/json', 'application/vnd.api+json',):
+                if request.content_type.find('application/json') != -1 or request.content_type.find(
+                        'application/vnd.api+json') != -1:
                     request_data = json.loads(request.body) if request.body else ''
                 elif request.content_type == 'multipart/form-data':
                     parser_obj = MultiPartParser()
