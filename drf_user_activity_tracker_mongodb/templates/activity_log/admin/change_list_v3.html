@@ -31,6 +31,7 @@
 {% endblock %}
 
 {% block content %}
+{% if perms.activity_tracker.view_activity_log %}
     <div id="content-main">
         <div class="module filtered" id="changelist">
             <div class="changelist-form-container">
@@ -190,4 +191,5 @@
             </div>
         </div>
     </div>
+{% endif %}
 {% endblock %}
