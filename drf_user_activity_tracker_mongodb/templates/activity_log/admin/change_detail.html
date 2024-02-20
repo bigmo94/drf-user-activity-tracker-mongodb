@@ -24,6 +24,7 @@
 {% endblock %}
 
 {% block content %}
+{% if perms.activity_tracker.view_activity_log %}
     {% under_score_tag data "_id" as id %}
     <H2>id:</H2>{{ id }}
     <br>
@@ -52,4 +53,5 @@
     <H2>execution_time:</H2>{{ data.execution_time }}
     <br>
     <H2>created time:</H2>{{ data.created_time }}
+{% endif %}
 {% endblock %}
