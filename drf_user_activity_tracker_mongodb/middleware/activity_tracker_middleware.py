@@ -67,6 +67,12 @@ class ActivityTrackerMiddleware:
                 self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS.extend(settings.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS)
 
     def __call__(self, request):
+        
+        method = request.method
+
+        # Log only registered methods if available.
+        if len(self.DRF_ACTIVITY_TRACKER_METHODS) > 0 and method not in self.DRF_ACTIVITY_TRACKER_METHODS:
+            return self.get_response(request)
 
         # Run only if logger is enabled.
         if self.DRF_ACTIVITY_TRACKER_DATABASE or self.DRF_ACTIVITY_TRACKER_SIGNAL:
@@ -115,14 +121,20 @@ class ActivityTrackerMiddleware:
 
             payload_data = {}
             if header_token:
-                token = header_token.split()[1]
-                user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                try:
+                    token = header_token.split()[1]
+                    user_token = jwt.decode(jwt=token, key=settings.SECRET_KEY, algorithms=[algorithm])
+                except:
+                    return response
                 for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
                     payload_data[key] = user_token.get(key)
 
             elif hasattr(response, 'data') and isinstance(response.data, dict) and response.data.get('access'):
-                user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
-                                        algorithms=[algorithm])
+                try:
+                    user_token = jwt.decode(jwt=response.data.get('access'), key=settings.SECRET_KEY,
+                                            algorithms=[algorithm])
+                except:
+                    return response
                 for key in self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS:
                     payload_data[key] = user_token.get(key)
 
@@ -133,11 +145,7 @@ class ActivityTrackerMiddleware:
                 return response
 
             headers = get_headers(request=request)
-            method = request.method
 
-            # Log only registered methods if available.
-            if len(self.DRF_ACTIVITY_TRACKER_METHODS) > 0 and method not in self.DRF_ACTIVITY_TRACKER_METHODS:
-                return self.get_response(request)
 
             if response.get('content-type') in ('application/json', 'application/vnd.api+json',):
                 if getattr(response, 'streaming', False):
