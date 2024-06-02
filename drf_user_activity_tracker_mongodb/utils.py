@@ -1,12 +1,11 @@
 import collections.abc
-import importlib
 import re
 from math import ceil
 
 from bson import ObjectId
-from django.apps import apps
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.urls import URLPattern, URLResolver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from pymongo import MongoClient
@@ -146,28 +145,19 @@ class MyCollection(MongoConnection):
         return self.collection.find_one({'_id': pk})
 
 
-def get_all_url_names():
-    list_of_all_urls = list()
-    list_of_url_name = list()
-    for name, app in apps.app_configs.items():
-        mod_to_import = f'{name}.urls'
-        try:
-            urls = getattr(importlib.import_module(mod_to_import), 'urlpatterns')
-            list_of_all_urls.extend(urls)
-        except ImportError as ex:
-            # is an app without urls
-            pass
-    for url in list_of_all_urls:
-        if hasattr(url, 'name'):
-            if url.name:
-                list_of_url_name.append(url.name)
+def get_all_url_names(urlpatterns):
+    """Recursively fetch URL names from urlpatterns."""
+    url_names = []
 
-    if hasattr(settings, 'DRF_ACTIVITY_TRACKER_URL_NAMES'):
-        if isinstance(settings.DRF_ACTIVITY_TRACKER_EXCLUDE_KEYS, (list, tuple)):
-            list_of_url_name.extend(settings.DRF_ACTIVITY_TRACKER_URL_NAMES)
-
-    list_of_url_name.sort()
-    return list_of_url_name
+    for pattern in urlpatterns:
+        if isinstance(pattern, URLPattern):  # A single URL pattern
+            if pattern.name:  # If the URL pattern has a name
+                full_name = pattern.name
+                url_names.append(full_name)
+        elif isinstance(pattern, URLResolver):  # A nested URL resolver
+            url_names.extend(get_all_url_names(pattern.url_patterns))
+    url_names.sort()
+    return url_names
 
 
 class ParamsHandler:
@@ -336,3 +326,4 @@ def create_time_delta_for_api(from_date, to_date):
         time_delta = {'$lte': created_time_before}
 
     return time_delta
+

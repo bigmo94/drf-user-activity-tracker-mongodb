@@ -1,3 +1,5 @@
+import importlib
+
 from django.conf import settings
 from django import get_version
 from django.contrib import admin
@@ -32,7 +34,10 @@ if database_log_enabled():
         def activity_log_view(self, request):
             params = ParamsHandler(request)
 
-            url_names_list = get_all_url_names()
+            project_urls = f"{settings.ROOT_URLCONF}"
+            urls = getattr(importlib.import_module(project_urls), 'urlpatterns')
+
+            url_names_list = get_all_url_names(urls)
             url_name = params.get_url_name()
             search_value = params.get_search_value()
             status_code = params.get_status()
@@ -83,3 +88,4 @@ if database_log_enabled():
                 return redirect(reverse('admin:index'))
             context = dict(self.admin_site.each_context(request), data=data)
             return TemplateResponse(request, "activity_log/admin/change_detail.html", context=context)
+
