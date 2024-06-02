@@ -299,7 +299,4 @@ DRF_ACTIVITI_API_LIMIT = 100  #for count of api results, default is 100.
 By default all activities are shown in user history endpoint. you can add specific url name that you don't want to show to the user in `DRF_ACTIVITI_API_UNNECESSARY_URL_NAME` attribute in settings.py and then the user can not be able to see them. 
 Note: This attribute must be a list.
 
-#### Excluding specific url names in django admin panel
-Note: In django admin panel you can filter logs by url name. some url name do not appear in filter list. you can set `DRF_ACTIVITY_TRACKER_URL_NAMES` in settings with the list of url names that you want to be filtered by.
-
 
