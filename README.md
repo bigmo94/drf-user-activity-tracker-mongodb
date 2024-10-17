@@ -1,7 +1,7 @@
 # DRF User Activity Tracker Mongodb
 ## _Log All User Activities_
 
-![version](https://img.shields.io/badge/version-1.4.4-blue.svg)
+![version](https://img.shields.io/badge/version-1.4.5-blue.svg)
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 <a href="https://github.com/bigmo94/drf-user-activity-tracker-mongodb"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/></a>
 
@@ -174,6 +174,13 @@ DRF_ACTIVITY_TRACKER_DONT_SKIP_URL_NAME = ['url_name1', 'url_name2']
 ```
 
 Note: It does not log Django Admin Panel API calls and history logs list API calls.
+
+### Don't Log Some Data
+To prevent certain keys from being logged in your database, you can specify those keys in the `DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS` within the settings.py file.
+```python
+DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS = ['country']
+```
+
 
 ### Hide Sensitive Data From Logs
 You may wish to hide sensitive information from being exposed in the logs. 

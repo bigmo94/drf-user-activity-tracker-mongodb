@@ -4,7 +4,7 @@ import pathlib
 import time
 
 import jwt
-import pygeoip
+import geoip2.database
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import resolve
@@ -65,6 +65,11 @@ class ActivityTrackerMiddleware:
         if hasattr(settings, 'DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS'):
             if isinstance(settings.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS, (tuple, list)):
                 self.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS.extend(settings.DRF_ACTIVITY_TRACKER_TOKEN_PAYLOAD_KEYS)
+
+        self.DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS = []
+        if hasattr(settings, 'DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS'):
+            if isinstance(settings.DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS, (tuple, list)):
+                self.DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS = settings.DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS
 
     def __call__(self, request):
         
@@ -163,21 +168,17 @@ class ActivityTrackerMiddleware:
                     api = request.get_raw_uri()
                 else:
                     api = request.build_absolute_uri()
+
                 ip = get_client_ip(request)
-                if ipaddress.ip_address(ip).version == 4:
-                    try:
-                        country_name = pygeoip.GeoIP(
-                            '{}/geo_databases/GeoIP.dat'.format(pathlib.Path(__file__).parent.parent),
-                            pygeoip.MEMORY_CACHE).country_name_by_addr(ip)
-                    except:
-                        country_name = ''
-                else:
-                    try:
-                        country_name = pygeoip.GeoIP(
-                            '{}/geo_databases/GeoIPv6.dat'.format(pathlib.Path(__file__).parent.parent),
-                            pygeoip.MEMORY_CACHE).country_name_by_addr(ip)
-                    except:
-                        country_name = ''
+                with geoip2.database.Reader(
+                        '{}/geo_databases/GeoLite2-Country.mmdb'.format(pathlib.Path(__file__).parent.parent)
+                ) as reader:
+                    country_response = reader.country(ip)
+                try:
+                    country_name = country_response.country.name
+                except:
+                    country_name = ''
+
                 data = dict(
                     url_name=url_name,
                     url_path=request.path,
@@ -193,6 +194,9 @@ class ActivityTrackerMiddleware:
                     country=country_name,
                 )
                 data.update(payload_data)
+                for must_remove_data in self.DRF_ACTIVITY_TRACKER_REMOVE_DATA_KEYS:
+                    data.pop(must_remove_data, None)
+
                 if self.DRF_ACTIVITY_TRACKER_DATABASE:
                     if LOGGER_THREAD:
                         LOGGER_THREAD.put_log_data(data=data)
@@ -204,3 +208,4 @@ class ActivityTrackerMiddleware:
         else:
             response = self.get_response(request)
         return response
+
