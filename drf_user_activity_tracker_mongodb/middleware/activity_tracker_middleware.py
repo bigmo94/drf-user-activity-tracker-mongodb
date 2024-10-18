@@ -170,12 +170,12 @@ class ActivityTrackerMiddleware:
                     api = request.build_absolute_uri()
 
                 ip = get_client_ip(request)
-                with geoip2.database.Reader(
-                        '{}/geo_databases/GeoLite2-Country.mmdb'.format(pathlib.Path(__file__).parent.parent)
-                ) as reader:
-                    country_response = reader.country(ip)
                 try:
-                    country_name = country_response.country.name
+                    with geoip2.database.Reader(
+                            '{}/geo_databases/GeoLite2-Country.mmdb'.format(pathlib.Path(__file__).parent.parent)
+                    ) as reader:
+                        country_response = reader.country(ip)
+                        country_name = country_response.country.name
                 except:
                     country_name = ''
 
