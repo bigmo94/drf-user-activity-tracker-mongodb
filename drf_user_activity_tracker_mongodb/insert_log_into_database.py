@@ -64,4 +64,4 @@ class InsertLogIntoDatabase(Thread):
         except Exception as e:
             message = "DRF ACTIVITY TRACKER EXCEPTION: {}, {}".format(str(e), type(e))
             logger.error(message)
-            raise Exception(message)
+            print(message)
